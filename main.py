@@ -1,27 +1,43 @@
 from typing import Union
-
 from fastapi import FastAPI
 from pydantic import BaseModel
+import sys, os
+root = os.path.abspath(os.path.join(__file__, '..', '..'))
+sys.path.append(root)
+sys.path.append(os.path.join(root, 'antiplagiat_nii'))
+from antiplagiat_nii.libs.schemas import *
+from antiplagiat_nii.main import AntiplagiatClient
+
+# from libs.schemas import SimpleCheckResult, Service, Source, Author, LoanBlock
+from antiplagiat_nii.libs.logger import logger
 
 app = FastAPI()
 
-
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: Union[bool, None] = None
-
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+client = AntiplagiatClient(
+    login="testapi@antiplagiat.ru",
+    password="testapi",
+    company_name="testapi"
+)
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.get("/check")
+def check_document(doc_id: int):
+    doc_id_obj = client.factory.DocumentId(Id=doc_id, External=None)
+    report = client.check_by_id(doc_id_obj)
+    return report
 
 
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    return {"item_name": item.name, "item_id": item_id}
+@app.post("/add")
+def add_to_index(filename: str, author_surname: str = '',
+                 author_other_names: str = '',
+                 external_user_id: str = 'ivanov',
+                 custom_id: str = 'original'):
+
+    doc_id = client.add_to_index(
+                    filename,
+                    author_surname=author_surname,
+                    author_other_names=author_other_names,
+                    external_user_id=external_user_id,
+                    custom_id = "original"
+                )
+    return doc_id
