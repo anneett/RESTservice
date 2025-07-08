@@ -19,14 +19,6 @@ client = AntiplagiatClient(
     company_name="testapi"
 )
 
-
-@app.get("/check")
-def check_document(doc_id: int):
-    doc_id_obj = client.factory.DocumentId(Id=doc_id, External=None)
-    report = client.check_by_id(doc_id_obj)
-    return report
-
-
 @app.post("/add")
 def add_to_index(filename: str, author_surname: str = '',
                  author_other_names: str = '',
@@ -41,3 +33,27 @@ def add_to_index(filename: str, author_surname: str = '',
                     custom_id = "original"
                 )
     return doc_id
+
+
+@app.get("/check")
+def check_document(doc_id: int):
+    doc_id_obj = client.factory.DocumentId(Id=doc_id, External=None)
+    report = client.check_by_id(doc_id_obj)
+    return report
+
+
+@app.post("/add_and_check")
+def add_and_check(filename: str, author_surname: str = '',
+                 author_other_names: str = '',
+                 external_user_id: str = 'ivanov',
+                 custom_id: str = 'original'):
+
+    doc_id = client.add_to_index(
+                    filename,
+                    author_surname=author_surname,
+                    author_other_names=author_other_names,
+                    external_user_id=external_user_id,
+                    custom_id = "original"
+                )
+    report = client.check_by_id(doc_id)
+    return report
